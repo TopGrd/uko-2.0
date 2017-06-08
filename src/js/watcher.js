@@ -2,11 +2,9 @@ import observer from './observer'
 import Dep from './Dep'
 
 class Watcher {
-  constructor(uko) {
+  constructor(uko, key, node, tpl) {
     this.uko = uko
-  }
-
-  collect(key, node) {
+    this.tpl = tpl
     this.watchNode = node
     this.watchKey = key
     Dep.target = this
@@ -15,8 +13,14 @@ class Watcher {
   }
 
   update() {
-    // this.uko.$compiler.reactive(this.watchNode, this.value)
-    this.watchNode.textContent = this.uko.$data[this.watchKey]
+    let val = ''
+    if (this.watchNode.nodeType === 3) {
+      val = this.uko.$compiler.compile(this.tpl, this.watchNode, true)
+    } else {
+      val = this.uko[this.watchKey]
+    }
+    this.watchNode.textContent = val
+    this.watchNode.value = val
   }
 }
 

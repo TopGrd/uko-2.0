@@ -9,6 +9,7 @@ class Dep {
 
   notify() {
     this.subs.forEach((sub) => {
+      console.log('update')
       sub.update()
     })
   }

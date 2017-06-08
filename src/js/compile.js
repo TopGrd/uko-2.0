@@ -6,10 +6,9 @@ function isUkoBind(ele) {
 
 export default class Compiler {
   constructor(el, uko) {
-    this.watchList = {}
     this.tpl = el
     this.uko = uko
-    this.watcher = new Watcher(uko)
+    // this.watcher = new Watcher(uko)
     this.transclude()
     this.scanDom(this.uko.$vdom)
     this.uko.mount()
@@ -26,12 +25,14 @@ export default class Compiler {
     node.textContent = newVal
   }
 
-  compile(tpl, node) {
+  compile(tpl, node, watchFlag) {
     const re = /\{\{\s*([^}]+\S)\s*\}\}/g
     let temp = tpl
     let match = ''
     while ((match = re.exec(temp))) {
-      this.watcher.collect(match[1], node)
+      if (!watchFlag) {
+        new Watcher(this.uko, match[1], node, tpl)
+      }
       temp = temp.replace(match[0], this.uko.$data[match[1]])
     }
     return temp
@@ -44,7 +45,6 @@ export default class Compiler {
       })
     }
     this.check(node)
-    // this.replace()
   }
 
   check(node) {
@@ -55,10 +55,10 @@ export default class Compiler {
       if (attrs.length !== 0) {
         model = attrs.filter(isUkoBind).map((key) => {
           if (key.nodeName === 'u-model') {
-            self.watcher.collect(key.nodeValue)
+            new Watcher(this.uko, key.nodeValue, node)
             this.bindValueChange(key, node)
           } else {
-            self.bindUkoEvent(key, node)
+            this.bindUkoEvent(key, node)
           }
           return key.nodeValue
         })
@@ -77,17 +77,26 @@ export default class Compiler {
       args = args.replace(/[(|)|'|"]/g, '').split(',')
     }
     const evt = key.nodeName.split('-')[1]
-    node.addEventListener(evt, () => {
-      // eslint-disable-next-line
-      this.uko[fun].apply(this.uko, args)
-    }, false)
+    node.addEventListener(
+      evt,
+      () => {
+        // eslint-disable-next-line
+        this.uko[fun].apply(this.uko, args)
+      },
+      false
+    )
   }
 
   bindValueChange(key, node) {
     if (node.tagName === 'INPUT' || node.tagName === 'TEXTAREA') {
-      node.addEventListener('input', (e) => {
-        this.uko[key.nodeValue] = e.target.value
-      }, false)
+      node.addEventListener(
+        'input',
+        (e) => {
+          this.uko[key.nodeValue] = e.target.value
+        },
+        false
+      )
+      node.value = this.uko[key.nodeValue]
     }
   }
 }
