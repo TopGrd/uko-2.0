@@ -9,12 +9,10 @@ function observerProp(provider, prop) {
   const dep = new Dep()
   Object.defineProperty(provider, prop, {
     get() {
-      console.log(`Get: ${prop}`)
       Dep.target && dep.addSub(Dep.target)
       return value
     },
     set(newValue) {
-      console.log(`Set: ${prop}`)
       if (newValue === value) {
         return
       }
